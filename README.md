@@ -2,17 +2,17 @@
 
 ### 1.结果可视化
 
-![loss](figures\task1-loss.png)
+![loss](figures/task1-loss.png)
 
-![acc](figures\task1-acc.png)
+![acc](figures/task1-acc.png)
 
 # TASK2
 
 ### 1.结果可视化
 
-![1772699981985](figures\task2-acc.png)
+![1772699981985](figures/task2-acc.png)
 
-![1772700019607](figures\task2-loss.png)
+![1772700019607](figures/task2-loss.png)
 
 ### 2.结果分析
 
@@ -32,14 +32,14 @@
 
 VLM选用Qwen3-VL-4B-Instruct，Action head选用GR00T，训练集使用libero_mix data。使用4张4090进行训练，但是因为要训练170h左右，只是训练了一百多轮就没有继续了。
 
-![1772695918285](figures\ei-task4-train_config.png)
+![1772695918285](figures/ei-task4-train_config.png)
 
 #### 2.推理
 
 在hf上下载训练好的权重进行测试。下载`Qwen2.5-VL-GR00T-LIBERO-4in1_checkpoints_steps_30000_pytorch_mode.pt`的权重，在libero_goal上进行推理。
 
-![1772696434799](figures\ei-task4-eval_config.png)
+![1772696434799](figures/ei-task4-eval_config.png)
 
 **500 episodes下正确率为0.958**
 
-![1772698615045](figures\ei-task4-eval.png)
+![1772698615045](figures/ei-task4-eval.png)
