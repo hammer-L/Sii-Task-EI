@@ -220,12 +220,18 @@ class Transformer(nn.Module):
 
     def forward(self, src_ids, target_ids):
         src_ids = src_ids.to(device)
-        target_ids = torch.tensor(target_ids).to(device)
+        target_ids = target_ids.to(device)
+        # print ("src_ids.shape", src_ids.shape)
+        # print("target_ids.shape", target_ids.shape)
+
         scr = self.pe(self.embedding(src_ids))
         tgt = self.pe(self.embedding(target_ids))
 
         enc_out = self.encoder(scr)
         dec_out = self.decoder(enc_out, tgt)
+        # print("enc_out.shape", enc_out.shape)
+        # print("dec_out.shape", dec_out.shape)
+
         logits = self.fc(dec_out)
 
         return logits
