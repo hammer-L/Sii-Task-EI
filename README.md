@@ -16,7 +16,7 @@
 
 所有结果整体一览：
 
-![all-new](E:\0workspace\Sii-Task-EI\figures\task2-all-new)
+![all-new](figures\task2-all-new)
 
 ### 2.结果分析
 
@@ -201,7 +201,6 @@ prompts = ["Valkyria Chronicles 3 is",
 ### 2.最后效果演示
 
 <video src="EI-task1\videos\rl-video-episode-0.mp4"></video>
-
 
 
 
