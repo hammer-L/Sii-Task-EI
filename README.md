@@ -16,7 +16,7 @@
 
 所有结果整体一览：
 
-![all-new](figures\task2-all-new)
+![all-new](figures/task2-all-new)
 
 ### 2.结果分析
 
@@ -24,11 +24,11 @@
 
 1. 不使用glove时
 
-![noglove](figures\task2-no_glove.png)
+![noglove](figures/task2-no_glove.png)
 
 2. 使用glove时
 
-![glove](figures\task2-glove.png)
+![glove](figures/task2-glove.png)
 
 3. 分析：
 
@@ -36,7 +36,7 @@
 
 #### （2）cnn的kernel_size多大比较合适：
 
-![cnn](figures\task2-cnn.png)
+![cnn](figures/task2-cnn.png)
 
 分析：在use_glove条件下
 
@@ -52,7 +52,7 @@
 
 #### （3）CNN vs RNN vs Transformer
 
-![model-new](figures\task2-model-new.png)
+![model-new](figures/task2-model-new.png)
 
 分析：在use_glove条件下
 
@@ -73,7 +73,7 @@
 
 #### （1）损失函数
 
-![1773498641313](figures\task3-sub-loss)
+![1773498641313](figures/task3-sub-loss)
 
 由上图可知：
 
@@ -82,7 +82,7 @@
 
 #### （2）准确率
 
-![1773498899497](figures\task3-sub1-acc.png)
+![1773498899497](figures/task3-sub1-acc.png)
 
 由上图可知：
 
@@ -119,7 +119,7 @@
 2. training: epochs = 2, lr = 1e-4, warmup_ratio = 0.05，余弦shcedule
 3. dataset: 选择wikitext-2数据集， 大小约为2M
 
-![img](figures\task3-sub2-train.png)
+![img](figures/task3-sub2-train.png)
 
 #### （2）结果演示
 
@@ -200,8 +200,7 @@ prompts = ["Valkyria Chronicles 3 is",
 
 ### 2.最后效果演示
 
-<video src="EI-task1\videos\rl-video-episode-0.mp4"></video>
-
+<video src="EI-task1/videos/rl-video-episode-0.mp4"></video>
 
 
 # EI-TASK-4
