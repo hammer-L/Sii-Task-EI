@@ -6,9 +6,9 @@
 """
 import torch
 import torch.nn as nn
-import argparse
 import numpy as np
-
+import math
+device = "cuda0" if torch.cuda.is_available() else "cpu"
 glove_path = "glove/glove.2024.wikigiga.50d/wiki_giga_2024_50_MFT20_vectors_seed_123_alpha_0.75_eta_0.075_combined.txt"
 
 def text_to_ids(tokenized_texts, vocab, max_len=50):
@@ -166,12 +166,36 @@ class CNNClassifier(nn.Module):
 
         return logits
 
+class PositionalEncoding(nn.Module):
+
+    def __init__(self, d_model, max_len=512):
+        super().__init__()
+
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len).unsqueeze(1)
+
+        div_term = torch.exp(
+            torch.arange(0, d_model, 2) *
+            (-math.log(10000.0) / d_model)
+        )
+
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+
+        pe = pe.unsqueeze(0)
+
+        self.register_buffer("pe", pe)
+
+    def forward(self, x):
+        return x + self.pe[:, :x.size(1)]
+
 """
-用kernel size=1,2,3三个卷积核来提取特征，再做cross attention后输出分类
+self, vocab_size, embedding_dim, hidden_dim, num_classes=5, dropout=0.04, use_glove=False,
+                 glove_matrix=None, kernel_size=3, stride=1
 """
-class TFClassifier(nn.Module):
-    def __init__(self, vocab_size, embedding_dim, hidden_dim, num_classes=5, dropout=0.04, use_glove=False,
-                 glove_matrix=None, stride=1):
+class TransformerClassifier(nn.Module):
+    def __init__(self,vocab_size, embedding_dim, hidden_dim, num_classes=5, use_glove=False, glove_matrix=None,
+                 nhead=2,num_layers=1, dropout=0.1,max_len=52):
         super().__init__()
 
         if not use_glove:
@@ -182,45 +206,65 @@ class TFClassifier(nn.Module):
                 freeze=True,
                 padding_idx=0
             )
-        self.use_glove = use_glove
-        self.glove_matrix = glove_matrix
+
+        self.pos_encoder = PositionalEncoding(hidden_dim, max_len)
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=hidden_dim,
+            nhead=nhead,
+            dim_feedforward=hidden_dim * 4,
+            dropout=dropout,
+            batch_first=True
+        )
+
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer,
+            num_layers=num_layers
+        )
+
         self.dropout = nn.Dropout(dropout)
 
+        self.classifier = nn.Linear(hidden_dim, num_classes)
 
-def predict(model, src_tokens, word_2_id, id_2_word, max_len=15, device=device):
-    """
-    真正的推理过程：一字一字生成，不使用教师迫导 (Teacher Forcing)
-    src_tokens: 输入的数学题 Tensor (B, L)
-    """
+    def forward(self, x, mask=None):
+        # x shape
+        # (batch, seq_len)
+        x = self.embedding(x)
+        x = self.pos_encoder(x)
+        x = self.transformer(x, src_key_padding_mask=mask)
+        x = x.mean(dim=1)
+        x = self.dropout(x)
+        logits = self.classifier(x)
+        return logits
+
+def evaluate(model, dataloader, device, criterion):
+
     model.eval()
-    bos_id = word_2_id['BOS']
-    eos_id = word_2_id['EOS']
-    batch_size = src_tokens.size(0)
+
+    total_loss = 0
+    correct = 0
+    total = 0
 
     with torch.no_grad():
-        # 1. 编码器只跑一次
-        #  model 有分别调用 encoder 和 decoder 的接口
-        src_emb = model.pe(model.embedding(src_tokens))
-        enc_out = model.encoder(src_emb)
 
-        # 2. 解码器初始输入只有 BOS
-        generated = torch.ones(batch_size, 1, dtype=torch.long, device=device) * bos_id
+        for batch_x, batch_y in dataloader:
 
-        for _ in range(max_len):
-            # 得到当前已生成序列的 embedding
-            dec_emb = model.pe(model.embedding(generated))
+            batch_x = batch_x.to(device)
+            batch_y = batch_y.to(device)
 
-            # 运行解码器 (需要传入 enc_out 进行 Cross Attention)
-            # 注意：这里的 model 调用需要根据你的 Transformer.forward 结构微调
-            logits = model.decoder(dec_emb, enc_out)
+            outputs = model(batch_x)
 
-            # 取最后一个时间步的输出作为下一个词的预测
-            next_token_logits = logits[:, -1, :]
-            next_token = next_token_logits.argmax(dim=-1, keepdim=True)  # (B, 1)
+            loss = criterion(outputs, batch_y)
 
-            # 拼接预测结果
-            generated = torch.cat([generated, next_token], dim=1)
+            total_loss += loss.item()
 
-    return generated
+            _, pred = torch.max(outputs, dim=1)
 
+            total += batch_y.size(0)
+            correct += (pred == batch_y).sum().item()
+
+    avg_loss = total_loss / len(dataloader)
+    acc = 100 * correct / total
+
+    return avg_loss, acc
 
